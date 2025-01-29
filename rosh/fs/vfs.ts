@@ -302,8 +302,3 @@ export class VFS implements IVFS {
     await parent.unlink(ctx, name);
   }
 }
-
-export var vfs!: VFS;
-export const initVfs = (root?: Dir) => {
-  vfs = new VFS(root);
-}

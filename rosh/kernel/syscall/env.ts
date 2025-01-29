@@ -1,4 +1,4 @@
-import { ProcessContext, FcnSyscall, resolvePath, vfs, shallowCopy } from "../../internal"
+import { ProcessContext, FcnSyscall, resolvePath, shallowCopy, getVfsFromCtx } from "../../internal"
 
 export const getcwdImpl = async (ctx: ProcessContext): Promise<string> => {
   return ctx.proc.cwd;
@@ -14,6 +14,7 @@ export const chdirImpl = async (ctx: ProcessContext, path: string): Promise<bool
   }
   path = `/${resolvePath(path).join('/')}`;
 
+  const vfs = getVfsFromCtx(ctx);
   let success: boolean;
   try {
     success = await vfs.chdir(ctx, path);

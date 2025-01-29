@@ -81,7 +81,7 @@ export class ProcDir extends Dir {
   }
 
   async list(ctx: ProcessContext): Promise<string[]> {
-    const kernel = await Kernel.getInstance();
+    const kernel = ctx.proc.kernel;
     const allProcs = kernel.getAllProcess();
 
     const fileNames: string[] = [];
@@ -99,7 +99,7 @@ export class ProcDir extends Dir {
       case 'self':
         return new ProcSelfSymlink();
       default: {
-        const kernel = await Kernel.getInstance();
+        const kernel = ctx.proc.kernel;
         const proc = kernel.getProcess(Number(name));
 
         if (!proc) {

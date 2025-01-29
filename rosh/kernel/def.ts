@@ -1,4 +1,4 @@
-import { FileHandle, assert, closeImpl, shallowCopy } from "../internal";
+import { FileHandle, Kernel, assert, closeImpl, shallowCopy } from "../internal";
 import { Buffer } from "buffer";
 
 export type FdTable = Array<FileHandle | null>;
@@ -18,6 +18,7 @@ export abstract class Process {
     KILLED: Symbol('KILLED')
   }
 
+  kernel!: Kernel;
   pid!: number;
   pgid!: number;
   parentPid!: number;

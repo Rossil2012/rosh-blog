@@ -57,7 +57,7 @@ export interface FileMethod {
 export interface FileProto extends InodeProto, FileMethod {};
 
 export interface DirMethod {
-  list(ctx: ProcessContext, ): Promise<string[]>;
+  list(ctx: ProcessContext): Promise<string[]>;
   lookup(ctx: ProcessContext, name: string): Promise<Inode | undefined>;
   rename(ctx: ProcessContext, oldName: string, newName: string): Promise<void>;
   create(ctx: ProcessContext, name: string, mode: number): Promise<void>;

@@ -1,4 +1,4 @@
-import { assert, Stream, ProcessContext, File, FileHandle, PollFlag, vfs } from '../internal';
+import { assert, Stream, ProcessContext, File, FileHandle, PollFlag, getVfsFromCtx } from '../internal';
 import { Buffer } from "buffer";
 
 /* Pseudo Terminal Slave */
@@ -59,6 +59,7 @@ export class PtmxFile extends File {
   async open(ctx: ProcessContext, handle: FileHandle): Promise<void> {
     const readStream = new Stream();
     const writeStream = new Stream();
+    const vfs = getVfsFromCtx(ctx);
     
     const pts = new PtsFile(writeStream, readStream, ctx.proc.uid);
     this.openPt_.set(handle, { idx: this.cnt_, readStream, writeStream });
@@ -71,6 +72,7 @@ export class PtmxFile extends File {
 
   async release(ctx: ProcessContext, handle: FileHandle): Promise<void> {
     const entry = this.getEntry_(handle);
+    const vfs = getVfsFromCtx(ctx);
     await vfs.unmount(ctx, `/dev/pts/${entry.idx}`);
     assert(this.openPt_.delete(handle));
   }

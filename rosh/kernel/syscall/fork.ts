@@ -1,5 +1,6 @@
 import { stdin, stdout, stderr, openImpl, readImpl, dup2Impl, closeImpl, FcnSyscall, assert,
-  ProcessContext, Process, Kernel, vfs, Inode, OpenFlags, Syscall, Entrypoint, Mode, BinFile, shallowCopy, getAbsPath, InodeWrapper, isFileWrapper } from "../../internal";
+  ProcessContext, Process, Kernel, Inode, OpenFlags, Syscall, Entrypoint, Mode, BinFile, shallowCopy, getAbsPath, InodeWrapper, isFileWrapper, 
+  getVfsFromCtx} from "../../internal";
 import { Buffer } from "buffer";
 
 type ProcessBuilder = new (...args: any[]) => Process;
@@ -19,6 +20,7 @@ const makeProcess = (ctx: ProcessContext, procT: ProcessBuilder | Process, env?:
   proc.buf = Array(ctx.proc.buf.length).fill(null);
   proc.env = env ?? shallowCopy(ctx.proc.env);
   proc.cwd = ctx.proc.cwd;
+  proc.kernel = ctx.proc.kernel;
 
   for (let i = 0; i < ctx.proc.fdtable.length; i++) {
     const handle = proc.fdtable[i];
@@ -32,7 +34,7 @@ const makeProcess = (ctx: ProcessContext, procT: ProcessBuilder | Process, env?:
 }
 
 export const spawnImpl = async (ctx: ProcessContext, procT: ProcessBuilder | Process, ...args: any[]): Promise<number> => {
-  const kernel = await Kernel.getInstance();
+  const kernel = ctx.proc.kernel;
 
   return kernel.createProcess(makeProcess(ctx, procT, undefined, ...args));
 }
@@ -76,7 +78,7 @@ export const SysSpawn = (procT: ProcessBuilder | Process, ...args: any[]) => {
 // }
 
 export const spawnPtyImpl = async (ctx: ProcessContext, procT: ProcessBuilder, ...args: any[]): Promise<{ pid: number, ptmxFd: number }> => {
-  const kernel = await Kernel.getInstance();
+  const kernel = ctx.proc.kernel;
   const ptmxFd = await openImpl(ctx, '/dev/ptmx', OpenFlags.READ | OpenFlags.WRITE);
   const ptsPath = `/dev/pts/${(await readImpl(ctx, ptmxFd, 4)).readUInt32LE(0)}`;
 
@@ -106,6 +108,7 @@ const lookupExecutable = async (ctx: ProcessContext, path: string): Promise<Exec
   const allAbsPath = getAbsPath(path, ctx.proc.cwd, envPath);
   let inode: InodeWrapper | undefined;
   let abspath: string;
+  const vfs = getVfsFromCtx(ctx);
   for (abspath of allAbsPath) {
     try {
       inode = await vfs.inode(ctx, abspath);
@@ -131,7 +134,7 @@ const lookupExecutable = async (ctx: ProcessContext, path: string): Promise<Exec
 }
 
 export const spawnvpeImpl = async (ctx: ProcessContext, path: string, args: any[], env?: Record<string, string>): Promise<number> => {
-  const kernel = await Kernel.getInstance();
+  const kernel = ctx.proc.kernel;
   const executable = await lookupExecutable(ctx, path);
 
   if (executable) {
@@ -170,7 +173,7 @@ export const SysExecvpe = (path: string, args: any[], env?: Record<string, strin
 
 export const waitpidImpl = async (ctx: ProcessContext, pid: number, options: number): Promise<{ pid: number, retCode: number } | undefined> => {
   const { proc } = ctx;
-  const kernel = await Kernel.getInstance();
+  const kernel = ctx.proc.kernel;
   const allProms: Promise<{ pid: number, retCode: number }>[] = [];
   let procGroup: Set<number> | undefined;
 

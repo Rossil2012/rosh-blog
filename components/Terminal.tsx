@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Terminal } from "xterm";
 import "xterm/css/xterm.css";
-import { getKernel, newConnection } from "@/rosh";
+import { newKernel } from "@/rosh";
 
 const Rosh = () => {
   const refXTerm = useRef<HTMLDivElement | null>(null);
@@ -17,8 +17,7 @@ const Rosh = () => {
     
     const setupConnection = async () => {
       try {
-        const kernel = await getKernel();
-        const connection = await newConnection(kernel);
+        const [kernel, connection] = await newKernel();
 
         connection.onData((data: string) => {
           xtermInstance.write(data);
@@ -35,7 +34,7 @@ const Rosh = () => {
     setupConnection();
 
     return () => {
-        xtermInstance.dispose();
+      xtermInstance.dispose();
     }
   }, []);
 

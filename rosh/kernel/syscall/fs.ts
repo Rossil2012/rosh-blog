@@ -1,5 +1,6 @@
-import { FcnSyscall, ProcessContext, OpenFlags, FileHandle, vfs, PollFlag, assert, sleep, 
-  findOrPushNullEntry, Process, StreamFile, BinFile, Executable, StatInfo, Inode, Stream, Kernel, shallowCopy, getAbsPath } from "../../internal";
+import { FcnSyscall, ProcessContext, OpenFlags, FileHandle, PollFlag, assert, sleep, 
+  findOrPushNullEntry, Process, StreamFile, BinFile, Executable, StatInfo, Inode, Stream, Kernel, shallowCopy, getAbsPath, 
+  VFS} from "../../internal";
 import { Buffer } from "buffer";
 
 export const stdin = 0;
@@ -25,6 +26,10 @@ const getHandle = (ctx: ProcessContext, fd: number): FileHandle => {
   return ctx.proc.fdtable[fd]!;
 }
 
+export const getVfsFromCtx = (ctx: ProcessContext): VFS => {
+  return ctx.proc.kernel.getVfs();
+}
+
 const allocFd = (proc: Process, handle?: FileHandle): number => {
   const fd = findOrPushNullEntry(proc.fdtable);
   assert(fd === findOrPushNullEntry(proc.buf));
@@ -37,6 +42,7 @@ const allocFd = (proc: Process, handle?: FileHandle): number => {
 
 export const openImpl = async (ctx: ProcessContext, path: string, flags: number) => {
   const { proc } = ctx;
+  const vfs = getVfsFromCtx(ctx);
   const handle = await vfs.open(ctx, path.startsWith('/') ? path : `${proc.cwd}/${path}`, flags);
   const fd = allocFd(proc, handle);
   return fd;
@@ -48,6 +54,7 @@ export const SysOpen = (path: string, flags: number) => {
 
 export const closeImpl = async (ctx: ProcessContext, fd: number) => {
   const { proc } = ctx;
+  const vfs = getVfsFromCtx(ctx);
   assert(checkFd(ctx, fd), 'close: illegal file descriptor.');
 
   const handle = getHandle(ctx, fd);
@@ -68,7 +75,7 @@ export const SysClose = (fd: number) => {
 export const readImpl = async (ctx: ProcessContext, fd: number, size: number): Promise<Buffer> => {
   assert(checkFd(ctx, fd), 'read: illegal file descriptor.');
 
-
+  const vfs = getVfsFromCtx(ctx);
   const handle = getHandle(ctx, fd);
   assert(checkFlags(handle.flags, OpenFlags.READ), 'read: The file is not opened with READ flag.');
 
@@ -116,6 +123,7 @@ export const SysGetLine = (fd: number, delim: string = '\n') => {
 export const writeImpl = async (ctx: ProcessContext, fd: number, data: Buffer): Promise<number> => {
   assert(checkFd(ctx, fd), 'write: illegal file descriptor.');
 
+  const vfs = getVfsFromCtx(ctx);
   const handle = getHandle(ctx, fd);
   assert(checkFlags(handle.flags, OpenFlags.WRITE), 'write: The file is not opened with WRITE flag.');
 
@@ -153,6 +161,7 @@ export const SysWriteAll = (fd: number, data: Buffer) => {
 export const getdentsImpl = async (ctx: ProcessContext, fd: number): Promise<string[]> => {
   assert(checkFd(ctx, fd), 'getdents: illegal file descriptor.');
 
+  const vfs = getVfsFromCtx(ctx);
   const handle = getHandle(ctx, fd);
   assert(checkFlags(handle.flags, OpenFlags.READ, OpenFlags.DIR), 'write: The file is not opened with both READ and DIR flag.');
 
@@ -164,6 +173,7 @@ export const SysGetdents = (fd: number) => {
 }
 
 export const statImpl = async (ctx: ProcessContext, path: string): Promise<StatInfo> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.stat(ctx, path);
 }
 
@@ -172,6 +182,7 @@ export const SysStat = (path: string) => {
 }
 
 export const chmodImpl = async (ctx: ProcessContext, path: string, mode: number): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.chmod(ctx, path, mode);
 }
 
@@ -180,6 +191,7 @@ export const SysChmod = (path: string, mode: number) => {
 }
 
 export const chownImpl = async (ctx: ProcessContext, path: string, uid: number, gid: number): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.chown(ctx, path, uid, gid);
 }
 
@@ -188,6 +200,7 @@ export const SysChown = (path: string, uid: number, gid: number) => {
 }
 
 export const creatImpl = async (ctx: ProcessContext, path: string, mode?: number): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.creat(ctx, path, mode);
 }
 
@@ -196,6 +209,7 @@ export const SysCreat = (path: string, mode?: number) => {
 }
 
 export const linkImpl = async (ctx: ProcessContext, target: string, source: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.link(ctx, target, source);
 }
 
@@ -204,6 +218,7 @@ export const SysLink = (target: string, source: string) => {
 }
 
 export const symlinkImpl = async (ctx: ProcessContext, target: string, source: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.symlink(ctx, target, source);
 }
 
@@ -212,6 +227,7 @@ export const SysSymlink = (target: string, source: string) => {
 }
 
 export const unlinkImpl = async (ctx: ProcessContext, path: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.unlink(ctx, path);
 }
 
@@ -220,6 +236,7 @@ export const SysUnlink = (path: string) => {
 }
 
 export const mkdirImpl = async (ctx: ProcessContext, path: string, mode?: number): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.mkdir(ctx, path, mode);
 }
 
@@ -228,6 +245,7 @@ export const SysMkdir = (path: string, mode?: number) => {
 }
 
 export const rmdirImpl = async (ctx: ProcessContext, path: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.rmdir(ctx, path);
 }
 
@@ -236,6 +254,7 @@ export const SysRmdir = (path: string) => {
 }
 
 export const renameImpl = async (ctx: ProcessContext, oldPath: string, newPath: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.rename(ctx, oldPath, newPath);
 }
 
@@ -244,6 +263,7 @@ export const SysRename = (oldPath: string, newPath: string) => {
 }
 
 export const truncateImpl = async (ctx: ProcessContext, path: string, length: number): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.truncate(ctx, path, length);
 }
 
@@ -252,6 +272,7 @@ export const SysTruncate = (path: string, length: number) => {
 }
 
 export const mountImpl = async (ctx: ProcessContext, path: string, inode: Inode): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.mount(ctx, path, inode);
 }
 
@@ -260,6 +281,7 @@ export const SysMount = (path: string, inode: Inode) => {
 }
 
 export const unmountImpl = async (ctx: ProcessContext, path: string): Promise<void> => {
+  const vfs = getVfsFromCtx(ctx);
   return vfs.unmount(ctx, path);
 };
 
@@ -270,6 +292,7 @@ export const SysUnmount = (path: string) => {
 export type FdSet = Array<{ fd: number, flag: PollFlag }>;
 
 export const selectImpl = async (ctx: ProcessContext, fdset: FdSet, timeout?: number) => { // TODO
+  const vfs = getVfsFromCtx(ctx);
   const allProm: Promise<number>[] = [];
 
   if (timeout) {

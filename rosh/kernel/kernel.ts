@@ -1,5 +1,6 @@
 import { Process, Syscall, ProcessContext, spawnImpl, FileHandle, OpenFlags, StreamFile, 
-  vfs, Chan, assert, findOrPushNullEntry, PtmxFile, RoshConnection, mkdirImpl, mountImpl, Entrypoint, initVfs, InitImage } from "../internal";
+  Chan, assert, findOrPushNullEntry, PtmxFile, RoshConnection, mkdirImpl, mountImpl, Entrypoint, InitImage, 
+  VFS} from "../internal";
 
 import { Buffer } from "buffer";
 
@@ -9,7 +10,7 @@ interface ReadyRequest {
 }
 
 class MockProcess extends Process {
-  constructor() {
+  constructor(kernel: Kernel) {
     super();
     this.pid = 0;
     this.pgid = 0;
@@ -19,6 +20,7 @@ class MockProcess extends Process {
     this.buf = [];
     this.env = {};
     this.cwd = '/';
+    this.kernel = kernel;
 
     const allFlags = [OpenFlags.READ, OpenFlags.WRITE, OpenFlags.WRITE];
 
@@ -42,15 +44,12 @@ export class Kernel {
   private readyChan_: Chan<ReadyRequest>;
   private ctx_!: ProcessContext;
   private ptmx_!: PtmxFile;
+  private vfs_!: VFS;
 
-  private static instance_: Kernel;
-
-  public static async getInstance(): Promise<Kernel> {
-    if (!Kernel.instance_) {
-      Kernel.instance_ = new Kernel();
-      await Kernel.instance_.init_();
-    }
-    return Kernel.instance_;
+  public static async newInstance(): Promise<Kernel> {
+    const kernel = new Kernel();
+    await kernel.init_();
+    return kernel;
   }
 
   private constructor() {
@@ -60,8 +59,8 @@ export class Kernel {
   }
 
   private async init_() {
-    this.ctx_ = { proc: new MockProcess() };
-    initVfs(new InitImage());
+    this.ctx_ = { proc: new MockProcess(this) };
+    this.vfs_ = new VFS(new InitImage());
     await mkdirImpl(this.ctx_, '/dev', 0o755);
     await mkdirImpl(this.ctx_, '/dev/pts', 0o755);
     this.ptmx_ = new PtmxFile();
@@ -84,6 +83,10 @@ export class Kernel {
       }
       proc.state = Process.STATE.READY;
     });
+  }
+
+  getVfs(): VFS {
+    return this.vfs_;
   }
 
   getAllProcess(): Process[] {
@@ -150,6 +153,7 @@ export class Kernel {
 
         this.execSyscallAsync_(proc, value as Syscall);
       } catch (err: unknown) {
+        console.error(err);
         await proc.return(-1);
       }
     }
