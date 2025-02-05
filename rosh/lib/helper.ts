@@ -87,3 +87,7 @@ export const resolvePath = (path: string): string[] => {
 
   return resolved;
 }
+
+export const unreachable = (): never => {
+  throw new Error('never reach');
+}

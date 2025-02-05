@@ -1,6 +1,7 @@
 import { assert, stdin, stdout, stderr, SysClose, SysDup2, SysSpawnvpe, Entrypoint, makeSequence, SysWaitpid, 
-  SysChdir, SysGetcwd, SysWriteAll, SysSetenv, createDefaultRecord, SysExecvpe, SysPipe, SysFork, Process, Executable, 
-  SysSpawn, shallowCopy, SysExec, SysRead, SysGetenv, SysEnvironment, SysOpen, OpenFlags } from "../../internal";
+  SysChdir, SysGetcwd, SysWriteAll, SysSetenv, createDefaultRecord, SysExecvpe, SysPipe, Process, Executable, 
+  SysSpawn, shallowCopy, SysExec, SysRead, SysGetenv, SysEnvironment, SysOpen, OpenFlags, 
+  unreachable} from "../../internal";
 import { Rosh, RoshContext, exitSymbol } from "./rosh";
 import { Environment, EnvVariable } from "./env";
 import { ParNamesOperator, UnAritOperator, BinAritOperator, GlobOperator, CaseOperator, BinCmdOperator, RedirOperator } from "./mvdanEnum";
@@ -313,6 +314,10 @@ export const resolveWordpart = async (ctx: RoshContext, part: WordPart): Promise
     default:
       throw new Error('never reach');
   }
+
+  // TODO: remove this
+  unreachable();
+  return EnvVariable.fromString('');
 }
 
 export const resolveWord = async (ctx: RoshContext, word: Word): Promise<string> => {
@@ -771,6 +776,8 @@ export const execCommand = async (ctx: RoshContext, cmd: Command, dup2?: Dup2Ent
       throw new Error(`${syntax.NodeType(cmd)} never reach`);
   }
 
+  // TODO: remove this
+  // @ts-ignore
   return retCode;
 }
 
