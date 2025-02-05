@@ -1,6 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const Rosh = dynamic(() => import('@/components/Terminal'), { ssr: false });
+import Rosh from '@/components/Terminal';
 
 export default function Home() {
   return (

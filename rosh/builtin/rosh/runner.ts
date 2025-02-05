@@ -520,7 +520,7 @@ export const execCommand = async (ctx: RoshContext, cmd: Command, dup2?: Dup2Ent
       for (const arg of expr.Args) {
         words.push(await resolveWord(ctx, arg!));
       }
-      console.log(words);
+      console.log('callexpr:',words);
 
       const envRecord = await rosh.execSyscall(SysEnvironment()) as Record<string, string>;
       for (const assign of expr.Assigns) {
@@ -811,6 +811,7 @@ const execFunc = async (ctx: RoshContext, command: string, args: string[], dup2:
 const execBuiltin = async (ctx: RoshContext, command: string, args: string[], dup2: Dup2Entry[], envRecord?: Record<string, string>): Promise<number | undefined> => {
   const { rosh, env } = ctx;
   let retCode: number | undefined;
+  console.log('execBuiltin:', command, args);
   switch (command) {
     case 'test': {
       const { readFd, writeFd } = await rosh.execSyscall(SysPipe()) as { readFd: number, writeFd: number };
@@ -962,8 +963,8 @@ const execExternal = async (ctx: RoshContext, command: string, args: string[], d
   }
 
   ({ retCode } = await rosh.execSyscall(SysWaitpid(pid)) as { pid: number, retCode: number });
+  console.log('execExternal:', command, args, pid, retCode);
 
-  console.log('execCall', command, retCode);
   return retCode;
 }
 

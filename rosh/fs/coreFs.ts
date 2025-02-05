@@ -14,9 +14,9 @@ export class CoreFile extends File {
   async setAttr(ctx: ProcessContext, attr: Partial<AttrInfo>): Promise<void> {
     if (attr.size) {
       if (attr.size < this.data_.length) {
-        this.data_ = this.data_.slice(0, length);
+        this.data_ = this.data_.slice(0, attr.size);
       } else if (attr.size > this.data_.length) {
-        const additionalData = Buffer.alloc(length - this.data_.length);
+        const additionalData = Buffer.alloc(attr.size - this.data_.length);
         this.data_ = Buffer.concat([this.data_, additionalData]);
       }
     }

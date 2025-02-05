@@ -1,8 +1,8 @@
-import { defineDocumentType, makeSource } from 'contentlayer/source-files';
+import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
 import rehypePrettyCode from 'rehype-pretty-code';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
-import remarkExternalLinks from 'remark-external-links';
+import rehypeExternalLinks from 'rehype-external-links';
 
 export const Article = defineDocumentType(() => ({
   name: 'Article',
@@ -26,7 +26,8 @@ export default makeSource({
     rehypePlugins: [
       rehypeSlug,
       [rehypePrettyCode, { theme: 'one-dark-pro' }],
+      rehypeExternalLinks,
     ],
-    remarkPlugins: [remarkGfm, remarkExternalLinks],
+    remarkPlugins: [remarkGfm],
   },
 });

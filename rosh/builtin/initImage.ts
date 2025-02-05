@@ -9,9 +9,10 @@ export TEST=test123
 export class InitImage extends CoreDir {
   constructor() {
     const binFile = [Rosh, Echo, Cat, Env, Ls];
+    const binFileName = ['rosh', 'echo', 'cat', 'env', 'ls'];
     const etcProfile = new CoreFile({ mode: 0o755 }, Buffer.from(etcProfileContent));
     const rootUsrBin = new CoreDir({ mode: 0o755 }, 
-      new Map(binFile.map(executable => [`${executable.name.toLowerCase()}`, new BinFile({ mode: 0o755 }, executable)])));
+      new Map(binFile.map((executable, index) => [`${binFileName[index].toLowerCase()}`, new BinFile({ mode: 0o755 }, executable)])));
     // const rootBin = new CoreDir({ mode: 0o755 });
     const rootBin = new CoreSymlink('/usr/bin', {});
     const rootHome = new CoreDir({ mode: 0o755 });
