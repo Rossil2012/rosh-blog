@@ -11,6 +11,7 @@ export * from "./fs/procFs";
 export * from "./fs/vfs";
 export * from "./kernel/def";
 export * from "./kernel/kernel";
+export * from "./kernel/builder";
 export * from "./kernel/syscall";
 export * from "./kernel/ptmx";
 export * from "./builtin/utils";

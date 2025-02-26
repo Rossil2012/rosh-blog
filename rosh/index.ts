@@ -1,10 +1,2 @@
-import { Kernel, RoshConnection } from "./internal";
-
-let kernel: Kernel | undefined;
-
-export const newKernel = async (): Promise<[Kernel, RoshConnection]> => {
-  kernel = await Kernel.newInstance();
-  kernel.schedule();
-  const connection = await kernel.newConnection();
-  return [kernel, connection];
-}
+export { Kernel, RoshConnection, KernelBuilder } from "./internal";
+export { File, Dir, Symlink, Inode, CoreDir, CoreFile, CoreSymlink } from "./internal";

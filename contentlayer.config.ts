@@ -3,6 +3,7 @@ import rehypePrettyCode from 'rehype-pretty-code';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import rehypeExternalLinks from 'rehype-external-links';
+import fs from 'fs';
 
 export const Article = defineDocumentType(() => ({
   name: 'Article',
@@ -16,6 +17,10 @@ export const Article = defineDocumentType(() => ({
   },
   computedFields: {
     url: { type: 'string', resolve: (post) => `/articles/${post._raw.flattenedPath}` },
+    rawContent: {
+      type: 'string',
+      resolve: (post) => fs.readFileSync(`content/${post._raw.sourceFilePath}`, 'utf-8'),
+    },
   },
 }));
 

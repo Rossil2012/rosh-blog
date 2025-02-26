@@ -1,6 +1,7 @@
 import { Process, Syscall, ProcessContext, spawnImpl, FileHandle, OpenFlags, StreamFile, 
   Chan, assert, findOrPushNullEntry, PtmxFile, RoshConnection, mkdirImpl, mountImpl, Entrypoint, InitImage, 
-  VFS} from "../internal";
+  VFS,
+  Inode} from "../internal";
 
 import { Buffer } from "buffer";
 
@@ -38,6 +39,10 @@ class MockProcess extends Process {
   }
 }
 
+export type KernelBuildArgs = {
+  mnt_points?: Map<string, Inode>;
+}
+
 export class Kernel {
   private allProcs_: Array<Process | null>;
   private allProcGroups_: Map<number, Set<number>>;
@@ -46,21 +51,20 @@ export class Kernel {
   private ptmx_!: PtmxFile;
   private vfs_!: VFS;
 
-  public static async newInstance(): Promise<Kernel> {
-    const kernel = new Kernel();
-    await kernel.init_();
-    return kernel;
-  }
-
-  private constructor() {
+  public constructor() {
     this.allProcs_ = [];
     this.allProcGroups_ = new Map();
     this.readyChan_ = new Chan();
   }
 
-  private async init_() {
+  public async init(args: KernelBuildArgs) {
     this.ctx_ = { proc: new MockProcess(this) };
     this.vfs_ = new VFS(new InitImage());
+    if (args.mnt_points) {
+      for (const [path, inode] of args.mnt_points.entries()) {
+        await mountImpl(this.ctx_, path, inode);
+      }
+    }
     await mkdirImpl(this.ctx_, '/dev', 0o755);
     await mkdirImpl(this.ctx_, '/dev/pts', 0o755);
     this.ptmx_ = new PtmxFile();

@@ -67,7 +67,6 @@ export class CoreDir extends Dir {
 
   async link(ctx: ProcessContext, name: string, source: Inode): Promise<void> {
     assert(!this.children_.has(name), 'EEXIST');
-    assert(!isDir(source), 'EISDIR');
     source.count++;
     this.children_.set(name, source);
   }

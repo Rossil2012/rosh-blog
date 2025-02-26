@@ -175,7 +175,7 @@ export class File extends Inode implements FileProto {
   }
 
   async poll(ctx: ProcessContext, handle: FileHandle, flag: PollFlag, resolve: () => void): Promise<boolean> {
-    return true;
+    throw new Error('EOPNOTSUPP');
   }
 }
 
