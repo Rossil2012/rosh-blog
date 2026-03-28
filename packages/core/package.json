@@ -1,0 +1,36 @@
+{
+  "name": "@rosh/core",
+  "version": "0.1.0",
+  "description": "A browser-based Unix shell kernel with virtual filesystem",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "chalk": "^5.4.1",
+    "mvdan-sh": "^0.10.1",
+    "unescape-js": "^1.1.4"
+  },
+  "devDependencies": {
+    "@types/mvdan-sh": "^0.10.9",
+    "@types/unescape-js": "^1.0.3",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "rimraf": "^6.0.1"
+  },
+  "license": "MIT"
+}
